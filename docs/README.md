@@ -2,7 +2,7 @@
 
 ## 🎯 Project Overview
 
-Staya enables users to:
+Steya enables users to:
 - Find nearby rooms for short stays (4-8 hours or flexible)
 - List unused rooms for rent
 - Book affordable hyperlocal stays
@@ -10,10 +10,9 @@ Staya enables users to:
 
 ## 🚀 Quick Start
 
-```bash
 # Clone repo
 git clone <repo-url>
-cd staya
+cd steya
 
 # Backend (FastAPI)
 cd backend
@@ -148,6 +147,8 @@ frontend/src/features/matches/*
 steya/
 │
 ├── frontend/
+|   |__public/
+|   |  |──index.html
 │   ├── src/
 │   │   ├── features/
 │   │   │   ├── auth/           👤 Member 1
@@ -201,6 +202,7 @@ steya/
 │   │   │
 │   │   ├── App.jsx
 │   │   └── index.js
+|   |   ├── index.css
 │   │
 │   └── package.json
 │

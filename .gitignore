@@ -1,0 +1,12 @@
+# Secrets
+.env
+.env.local
+
+# Dependencies
+node_modules/
+backend/requirements.txt 
+__pycache__/
+*.pyc
+
+# OS files
+.DS_Store

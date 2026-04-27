@@ -1,59 +1,41 @@
-"""ML Service - Distance Calculations and Matching"""
 import math
-from typing import List, Dict
 
 
 class MLService:
-    
     @staticmethod
-    def calculate_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
-        """Calculate distance in kilometers using Haversine formula"""
-        R = 6371
-        
-        lat1, lng1, lat2, lng2 = map(math.radians, [lat1, lng1, lat2, lng2])
+    def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+        radius_earth_km = 6371
+        lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
         dlat = lat2 - lat1
-        dlng = lng2 - lng1
-        
-        a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlng/2)**2
+        dlon = lon2 - lon1
+        a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-        
-        return R * c
-    
+        return radius_earth_km * c
+
     @staticmethod
-    def find_route_matches(user_route: Dict, all_routes: List[Dict], threshold: float = 2.0) -> List[Dict]:
-        """Find users with opposite commute routes"""
+    def find_route_matches(user_route, all_routes, threshold_km: float = 5.0):
         matches = []
-        
-        user_start = (user_route['start_lat'], user_route['start_lng'])
-        user_end = (user_route['end_lat'], user_route['end_lng'])
-        
+        user_start = (float(user_route.start_latitude), float(user_route.start_longitude))
+        user_end = (float(user_route.end_latitude), float(user_route.end_longitude))
+
         for route in all_routes:
-            if route['user_id'] == user_route['user_id']:
+            if route.id == user_route.id or route.user_id == user_route.user_id:
                 continue
-            
-            other_start = (route['start_lat'], route['start_lng'])
-            other_end = (route['end_lat'], route['end_lng'])
-            
-            start_match = MLService.calculate_distance(
-                user_start[0], user_start[1],
-                other_end[0], other_end[1]
-            )
-            
-            end_match = MLService.calculate_distance(
-                user_end[0], user_end[1],
-                other_start[0], other_start[1]
-            )
-            
-            if start_match <= threshold and end_match <= threshold:
-                compatibility = 1 - ((start_match + end_match) / (2 * threshold))
-                matches.append({
-                    'user_id': route['user_id'],
-                    'user_name': route.get('user_name', 'User'),
-                    'compatibility': round(compatibility, 2),
-                    'route_name': route.get('route_name', ''),
-                    'start_address': route.get('start_address', ''),
-                    'end_address': route.get('end_address', '')
-                })
-        
-        matches.sort(key=lambda x: x['compatibility'], reverse=True)
-        return matches[:5]
+            other_start = (float(route.start_latitude), float(route.start_longitude))
+            other_end = (float(route.end_latitude), float(route.end_longitude))
+            start_distance = MLService.haversine_distance(*user_start, *other_end)
+            end_distance = MLService.haversine_distance(*user_end, *other_start)
+            if start_distance <= threshold_km and end_distance <= threshold_km:
+                avg_distance = (start_distance + end_distance) / 2
+                compatibility = max(0.0, 1 - (avg_distance / threshold_km))
+                matches.append(
+                    {
+                        "user_id": route.user_id,
+                        "route_id": route.id,
+                        "route_name": route.route_name,
+                        "compatibility_score": round(compatibility, 3),
+                        "start_distance_km": round(start_distance, 3),
+                        "end_distance_km": round(end_distance, 3),
+                    }
+                )
+        return sorted(matches, key=lambda item: item["compatibility_score"], reverse=True)
